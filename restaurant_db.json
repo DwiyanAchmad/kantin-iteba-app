@@ -1,0 +1,216 @@
+{
+  "config": {
+    "name": "KedaiKami",
+    "address": "Kantin ITEBA",
+    "latitude": 1.0429847,
+    "longitude": 103.9502429,
+    "geofenceRadiusMeters": 50
+  },
+  "menuItems": [
+    {
+      "id": "1",
+      "name": "Nasi Goreng Kambing Kebon Sirih",
+      "description": "Nasi goreng legendaris dengan rempah pilihan, potongan daging kambing empuk, emping renyah, dan acar segar.",
+      "price": 35000,
+      "category": "food",
+      "image": "https://images.unsplash.com/photo-1601050690597-df056fb4ce78?auto=format&fit=crop&q=80&w=400",
+      "stock": 25,
+      "isAvailable": true,
+      "popular": true,
+      "salesCount": 42
+    },
+    {
+      "id": "2",
+      "name": "Sate Ayam Madura Premium",
+      "description": "10 tusuk sate ayam dada empuk yang dipanggang merata, disiram saus kacang gurih kental khas Madura, bawang goreng, dan lontong.",
+      "price": 28000,
+      "category": "food",
+      "image": "https://images.unsplash.com/photo-1529042410759-befb1204b468?auto=format&fit=crop&q=80&w=400",
+      "stock": 15,
+      "isAvailable": true,
+      "popular": true,
+      "salesCount": 38
+    },
+    {
+      "id": "3",
+      "name": "Ayam Penyet Sambal Korek",
+      "description": "Ayam goreng potongan besar garing dengan baluran bumbu ketumbar, dipenyet dengan sambal korek super pedas yang disiram minyak panas.",
+      "price": 26050,
+      "category": "food",
+      "image": "https://images.unsplash.com/photo-1598515214211-89d3e73ae83b?auto=format&fit=crop&q=80&w=400",
+      "stock": 20,
+      "isAvailable": true,
+      "popular": false,
+      "salesCount": 15
+    },
+    {
+      "id": "9",
+      "name": "Bakso Sapi Urat Wonogiri",
+      "description": "Bakso urat sapi asli dengan kuah kaldu sumsum gurih berempah, mie kuning, bihun, tahu bakso, taburan seledri dan bawang goreng.",
+      "price": 24000,
+      "category": "food",
+      "image": "https://images.unsplash.com/photo-1541832676-9b763b0239ab?auto=format&fit=crop&q=80&w=400",
+      "stock": 30,
+      "isAvailable": true,
+      "popular": false,
+      "salesCount": 18
+    },
+    {
+      "id": "10",
+      "name": "Mie Ayam Rica-Rica Spesial",
+      "description": "Mie telur kenyal dipadukan dengan tumisan ayam bumbu rica-rica pedas gurih, sawi hijau segar, pangsit basah, dan mangkuk kuah bening.",
+      "price": 22000,
+      "category": "food",
+      "image": "https://images.unsplash.com/photo-1612927601601-6638404737ce?auto=format&fit=crop&q=80&w=400",
+      "stock": 18,
+      "isAvailable": true,
+      "popular": false,
+      "salesCount": 12
+    },
+    {
+      "id": "4",
+      "name": "Kopi Susu Gula Aren Signature",
+      "description": "Double shot espresso robusta lokal creamy dipadukan dengan susu murni premium dan pemanis sirup gula aren organik asli.",
+      "price": 18000,
+      "category": "drink",
+      "image": "https://images.unsplash.com/photo-1541167760496-1628856ab772?auto=format&fit=crop&q=80&w=400",
+      "stock": 50,
+      "isAvailable": true,
+      "popular": true,
+      "salesCount": 65
+    },
+    {
+      "id": "5",
+      "name": "Jus Alpukat Kocok Chocolate",
+      "description": "Alpukat mentega matang dikocok kasar, ditambah susu dingin, disiram pinggiran gelas dengan sirup cokelat kental nan manis.",
+      "price": 22000,
+      "category": "drink",
+      "image": "https://images.unsplash.com/photo-1483918793747-5adbf82956c4?auto=format&fit=crop&q=80&w=400",
+      "stock": 30,
+      "isAvailable": true,
+      "popular": false,
+      "salesCount": 22
+    },
+    {
+      "id": "6",
+      "name": "Es Jeruk Peras Murni",
+      "description": "Perasan jeruk Pontianak segar berkualitas dengan tambahan es batu kristal dan sedikit sirup pemanis murni.",
+      "price": 12050,
+      "category": "drink",
+      "image": "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?auto=format&fit=crop&q=80&w=400",
+      "stock": 40,
+      "isAvailable": true,
+      "popular": false,
+      "salesCount": 19
+    },
+    {
+      "id": "7",
+      "name": "Es Teh Selasih Jeruk Nipis",
+      "description": "Seduhan teh melati wangi berkelas disajikan dingin dengan jeruk nipis segar yang diperas dan butiran biji selasih berkhasiat.",
+      "price": 8000,
+      "category": "drink",
+      "image": "https://images.unsplash.com/photo-1556679343-c7306c1976bc?auto=format&fit=crop&q=80&w=400",
+      "stock": 100,
+      "isAvailable": true,
+      "popular": true,
+      "salesCount": 88
+    },
+    {
+      "id": "11",
+      "name": "Es Kelapa Muda Coco Pandan",
+      "description": "Daging kelapa muda serut berpadu dengan air kelapa segar murni, dibumbui es serut dan kucuran sirup coco pandan merah delima.",
+      "price": 15000,
+      "category": "drink",
+      "image": "https://images.unsplash.com/photo-1595981267035-7b04ec82a897?auto=format&fit=crop&q=80&w=400",
+      "stock": 25,
+      "isAvailable": true,
+      "popular": true,
+      "salesCount": 31
+    },
+    {
+      "id": "8",
+      "name": "Pisang Goreng Keju Aren",
+      "description": "Pisang tanduk balur tepung renyah dengan toping parutan keju Cheddar melimpah dan disiram sirup gula kelapa manis alami.",
+      "price": 15000,
+      "category": "snack",
+      "image": "https://images.unsplash.com/photo-1566813454378-ee2b81df8d79?auto=format&fit=crop&q=80&w=400",
+      "stock": 20,
+      "isAvailable": true,
+      "popular": false,
+      "salesCount": 14
+    },
+    {
+      "id": "12",
+      "name": "Tempe Mendoan Anget Banyumas",
+      "description": "Tempe lembaran tipis lebar berbalut tepung bumbu ketumbar-daun bawang gurih khas Banyumas, digoreng setengah matang (mendo). Disajikan dengan kecap cabe rawit.",
+      "price": 12000,
+      "category": "snack",
+      "image": "https://images.unsplash.com/photo-1599487488170-d11ec9c172f0?auto=format&fit=crop&q=80&w=400",
+      "stock": 35,
+      "isAvailable": true,
+      "popular": true,
+      "salesCount": 45
+    },
+    {
+      "id": "13",
+      "name": "Roti Bakar Cokelat Keju",
+      "description": "Roti bantal panggang garing mentega susu dengan isian melimpah meses cokelat premium dan parutan keju tebal gurih.",
+      "price": 16000,
+      "category": "snack",
+      "image": "https://images.unsplash.com/photo-1584776296944-ab6fb57b0bdd?auto=format&fit=crop&q=80&w=400",
+      "stock": 15,
+      "isAvailable": true,
+      "popular": false,
+      "salesCount": 9
+    },
+    {
+      "id": "14",
+      "name": "Cireng Rempah Saus Rujak",
+      "description": "Camilan aci garing di luar kenyal lembut di dalam berbumbu bawang, disajikan bersama saus rujak gula merah pedas manis mantap.",
+      "price": 10000,
+      "category": "snack",
+      "image": "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?auto=format&fit=crop&q=80&w=400",
+      "stock": 40,
+      "isAvailable": true,
+      "popular": false,
+      "salesCount": 23
+    },
+    {
+      "id": "15",
+      "name": "Kentang Goreng Truffle Herb",
+      "description": "Kentang potong lurus renyah ditaburi garam laut, minyak aroma premium truffle putih, keju parmesan halus, dan rajangan peterseli segar.",
+      "price": 18000,
+      "category": "snack",
+      "image": "https://images.unsplash.com/photo-1576107232684-1279f390859f?auto=format&fit=crop&q=80&w=400",
+      "stock": 22,
+      "isAvailable": true,
+      "popular": true,
+      "salesCount": 17
+    }
+  ],
+  "orders": [
+    {
+      "id": "GUSTO-64806",
+      "items": [
+        {
+          "menuItemId": "1",
+          "name": "Nasi Goreng Kambing Kebon Sirih",
+          "price": 35000,
+          "quantity": 1,
+          "notes": "pedas"
+        }
+      ],
+      "totalAmount": 35000,
+      "orderType": "dine-in",
+      "tableNo": "T-03",
+      "status": "completed",
+      "paymentMethod": "ewallet",
+      "paymentStatus": "paid",
+      "customerName": "Dwiyan",
+      "customerPhone": "081378779804",
+      "distanceInMeters": 19,
+      "timestamp": "2026-06-04T02:10:06.480Z"
+    }
+  ],
+  "notifications": []
+}

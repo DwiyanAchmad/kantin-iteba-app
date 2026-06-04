@@ -1,0 +1,92 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Global Catch-All Deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) { 
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$'); 
+    }
+    
+    function incoming() { 
+      return request.resource.data; 
+    }
+    
+    function existing() { 
+      return resource.data; 
+    }
+
+    function isValidRestaurantConfig(data) {
+      return data.name is string && data.name.size() <= 100
+        && data.address is string && data.address.size() <= 500
+        && data.latitude is number
+        && data.longitude is number
+        && data.geofenceRadiusMeters is number && data.geofenceRadiusMeters >= 10;
+    }
+
+    function isValidMenuItem(data) {
+      return data.id is string
+        && data.name is string && data.name.size() <= 150
+        && data.description is string && data.description.size() <= 2000
+        && data.price is number && data.price >= 0
+        && data.category is string && (data.category == 'food' || data.category == 'drink' || data.category == 'snack' || data.category == 'dessert')
+        && data.image is string
+        && data.stock is number && data.stock >= 0
+        && data.isAvailable is bool
+        && data.popular is bool
+        && data.salesCount is number && data.salesCount >= 0;
+    }
+
+    function isValidOrder(data) {
+      return data.id is string
+        && data.items is list && data.items.size() > 0
+        && data.totalAmount is number && data.totalAmount >= 0
+        && data.orderType is string && (data.orderType == 'dine-in' || data.orderType == 'pickup')
+        && data.status is string && (data.status == 'pending' || data.status == 'processing' || data.status == 'completed' || data.status == 'cancelled')
+        && data.paymentMethod is string && (data.paymentMethod == 'qris' || data.paymentMethod == 'ewallet' || data.paymentMethod == 'card' || data.paymentMethod == 'cash')
+        && data.paymentStatus is string && (data.paymentStatus == 'pending' || data.paymentStatus == 'paid' || data.paymentStatus == 'failed')
+        && data.customerName is string && data.customerName.size() <= 100
+        && data.customerPhone is string && data.customerPhone.size() <= 50
+        && data.timestamp is string;
+    }
+
+    function isValidNotification(data) {
+      return data.id is string
+        && data.orderId is string
+        && data.customerName is string
+        && data.orderType is string
+        && data.itemsSummary is string
+        && data.timestamp is string
+        && data.read is bool;
+    }
+
+    // Collection: config
+    match /config/restaurant {
+      allow read: if true;
+      allow write: if isValidRestaurantConfig(incoming());
+    }
+
+    // Collection: menuItems
+    match /menuItems/{itemId} {
+      allow read: if true;
+      allow write: if isValidId(itemId) && isValidMenuItem(incoming());
+    }
+
+    // Collection: orders
+    match /orders/{orderId} {
+      allow read: if true;
+      allow write: if isValidId(orderId) && isValidOrder(incoming());
+    }
+
+    // Collection: notifications
+    match /notifications/{notificationId} {
+      allow read: if true;
+      allow write: if isValidId(notificationId) && isValidNotification(incoming());
+    }
+  }
+}

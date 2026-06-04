@@ -1,0 +1,6 @@
+{
+  "name": "KedaiKami",
+  "description": "Sistem pemesanan makanan dan minuman pintar dengan validasi geofencing, pembayaran digital instan, monitor dapur, serta kelola stok dan koordinat lokasi bagi admin.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
