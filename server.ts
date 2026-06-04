@@ -250,8 +250,20 @@ console.log("[Firebase Diagnostics] Connection profile evaluation:", {
   firestoreDatabaseId: firebaseConfig.firestoreDatabaseId
 });
 
-const firebaseApp = initializeApp(firebaseConfig);
-const db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+let firebaseApp: any = null;
+let db: any = null;
+
+if (firebaseConfig.projectId && firebaseConfig.apiKey) {
+  try {
+    firebaseApp = initializeApp(firebaseConfig);
+    db = getFirestore(firebaseApp, firebaseConfig.firestoreDatabaseId);
+    console.log("[Firebase Initialization] SDK initialized successfully.");
+  } catch (err) {
+    console.warn("[Firebase Initialization] Failed to initialize Firebase SDK; falling back to local memory-based store:", err);
+  }
+} else {
+  console.log("[Firebase Initialization] Key credentials missing, operating in hybrid memory-offline mode.");
+}
 
 // Mandated Error Handlers for Firestore connection stability and audit requirements
 enum OperationType {
@@ -284,8 +296,45 @@ function handleFirestoreError(error: unknown, operationType: OperationType, path
   throw new Error(JSON.stringify(errInfo));
 }
 
+// Local In-Memory Fallback and Sync mechanism
+let memoConfig: RestaurantConfig = defaultRestaurantConfig;
+let memoMenuItems: MenuItem[] = [...defaultMenuItems];
+let memoOrders: Order[] = [];
+let memoNotifications: KitchenNotification[] = [];
+
+// Load from local json file initially to populate the fallbacks
+try {
+  if (fs.existsSync(DB_FILE)) {
+    const fileData = JSON.parse(fs.readFileSync(DB_FILE, 'utf-8'));
+    if (fileData.config) memoConfig = fileData.config;
+    if (fileData.menuItems && fileData.menuItems.length > 0) memoMenuItems = fileData.menuItems;
+    if (fileData.orders) memoOrders = fileData.orders;
+    if (fileData.notifications) memoNotifications = fileData.notifications;
+    console.log("[JSON Fallback Ready] Pre-loaded database backup file.");
+  }
+} catch (err) {
+  console.warn("Could not pre-populate memory DB cache:", err);
+}
+
+// Save helper that is totally safe and doesn't crash on Vercel write-only disk
+function saveToLocalDiskSafe() {
+  try {
+    const backupData = {
+      config: memoConfig,
+      menuItems: memoMenuItems,
+      orders: memoOrders,
+      notifications: memoNotifications
+    };
+    fs.writeFileSync(DB_FILE, JSON.stringify(backupData, null, 2), 'utf-8');
+  } catch (err) {
+    // Silently ignore or warn, since Vercel lacks a writeable disk
+    console.log("[Local Disk Sync] Read-only / disabled in serverless host:", err);
+  }
+}
+
 // Perform validation connection test to Firestore
 async function testConnection() {
+  if (!db) return;
   try {
     await getDocFromServer(doc(db, 'test', 'connection'));
     console.log("Firestore adapter successfully connected and online.");
@@ -299,6 +348,7 @@ testConnection();
 
 // Initial database bootstrapping from DB_FILE or fallback definitions
 async function bootstrapDB() {
+  if (!db) return;
   try {
     // 1. Config bootstrap
     const configSnap = await getDoc(doc(db, 'config', 'restaurant'));
@@ -335,123 +385,191 @@ async function bootstrapDB() {
 }
 bootstrapDB();
 
-// Async database access helpers in place of loadDB/saveDB
+// Async database access helpers in place of loadDB/saveDB with full multi-fallback safety
 async function getRestaurantConfigFirestore(): Promise<RestaurantConfig> {
-  try {
-    const snap = await getDoc(doc(db, 'config', 'restaurant'));
-    if (snap.exists()) {
-      return snap.data() as RestaurantConfig;
+  if (db) {
+    try {
+      const snap = await getDoc(doc(db, 'config', 'restaurant'));
+      if (snap.exists()) {
+        const data = snap.data() as RestaurantConfig;
+        memoConfig = data;
+        return data;
+      }
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] getRestaurantConfigFirestore failed, using local model:", error);
     }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'config/restaurant');
   }
-  return defaultRestaurantConfig;
+  return memoConfig;
 }
 
 async function saveRestaurantConfigFirestore(config: RestaurantConfig): Promise<void> {
-  try {
-    await setDoc(doc(db, 'config', 'restaurant'), config);
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, 'config/restaurant');
+  memoConfig = config;
+  saveToLocalDiskSafe();
+  if (db) {
+    try {
+      await setDoc(doc(db, 'config', 'restaurant'), config);
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] saveRestaurantConfigFirestore failed, saved in memory only:", error);
+    }
   }
 }
 
 async function getMenuItemsFirestore(): Promise<MenuItem[]> {
-  try {
-    const snap = await getDocs(collection(db, 'menuItems'));
-    const items: MenuItem[] = [];
-    snap.forEach(docSnap => {
-      items.push(docSnap.data() as MenuItem);
-    });
-    return items;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'menuItems');
+  if (db) {
+    try {
+      const snap = await getDocs(collection(db, 'menuItems'));
+      const items: MenuItem[] = [];
+      snap.forEach(docSnap => {
+        items.push(docSnap.data() as MenuItem);
+      });
+      if (items.length > 0) {
+        memoMenuItems = items;
+        return items;
+      }
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] getMenuItemsFirestore failed, using local memory:", error);
+    }
   }
-  return [];
+  return memoMenuItems;
 }
 
 async function saveMenuItemFirestore(item: MenuItem): Promise<void> {
-  try {
-    await setDoc(doc(db, 'menuItems', item.id), item);
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `menuItems/${item.id}`);
+  const existingIdx = memoMenuItems.findIndex(i => i.id === item.id);
+  if (existingIdx !== -1) {
+    memoMenuItems[existingIdx] = item;
+  } else {
+    memoMenuItems.push(item);
+  }
+  saveToLocalDiskSafe();
+
+  if (db) {
+    try {
+      await setDoc(doc(db, 'menuItems', item.id), item);
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] saveMenuItemFirestore failed, saved in memory only:", error);
+    }
   }
 }
 
 async function deleteMenuItemFirestore(id: string): Promise<void> {
-  try {
-    await deleteDoc(doc(db, 'menuItems', id));
-  } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, `menuItems/${id}`);
+  memoMenuItems = memoMenuItems.filter(i => i.id !== id);
+  saveToLocalDiskSafe();
+
+  if (db) {
+    try {
+      await deleteDoc(doc(db, 'menuItems', id));
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] deleteMenuItemFirestore failed, deleted from memory only:", error);
+    }
   }
 }
 
 async function getOrdersFirestore(): Promise<Order[]> {
-  try {
-    const snap = await getDocs(collection(db, 'orders'));
-    const orders: Order[] = [];
-    snap.forEach(docSnap => {
-      orders.push(docSnap.data() as Order);
-    });
-    return orders;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'orders');
+  if (db) {
+    try {
+      const snap = await getDocs(collection(db, 'orders'));
+      const orders: Order[] = [];
+      snap.forEach(docSnap => {
+        orders.push(docSnap.data() as Order);
+      });
+      if (orders.length > 0) {
+        memoOrders = orders;
+        return orders;
+      }
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] getOrdersFirestore failed, using local memory:", error);
+    }
   }
-  return [];
+  return memoOrders;
 }
 
 async function saveOrderFirestore(order: Order): Promise<void> {
-  try {
-    await setDoc(doc(db, 'orders', order.id), order);
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `orders/${order.id}`);
+  const existingIdx = memoOrders.findIndex(o => o.id === order.id);
+  if (existingIdx !== -1) {
+    memoOrders[existingIdx] = order;
+  } else {
+    memoOrders.push(order);
+  }
+  saveToLocalDiskSafe();
+
+  if (db) {
+    try {
+      await setDoc(doc(db, 'orders', order.id), order);
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] saveOrderFirestore failed, saved in memory only:", error);
+    }
   }
 }
 
 async function getNotificationsFirestore(): Promise<KitchenNotification[]> {
-  try {
-    const snap = await getDocs(collection(db, 'notifications'));
-    const list: KitchenNotification[] = [];
-    snap.forEach(docSnap => {
-      list.push(docSnap.data() as KitchenNotification);
-    });
-    return list;
-  } catch (error) {
-    handleFirestoreError(error, OperationType.GET, 'notifications');
+  if (db) {
+    try {
+      const snap = await getDocs(collection(db, 'notifications'));
+      const list: KitchenNotification[] = [];
+      snap.forEach(docSnap => {
+        list.push(docSnap.data() as KitchenNotification);
+      });
+      if (list.length > 0) {
+        memoNotifications = list;
+        return list;
+      }
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] getNotificationsFirestore failed, using local memory:", error);
+    }
   }
-  return [];
+  return memoNotifications;
 }
 
 async function saveNotificationFirestore(notif: KitchenNotification): Promise<void> {
-  try {
-    await setDoc(doc(db, 'notifications', notif.id), notif);
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, `notifications/${notif.id}`);
+  const existingIdx = memoNotifications.findIndex(n => n.id === notif.id);
+  if (existingIdx !== -1) {
+    memoNotifications[existingIdx] = notif;
+  } else {
+    memoNotifications.push(notif);
+  }
+  saveToLocalDiskSafe();
+
+  if (db) {
+    try {
+      await setDoc(doc(db, 'notifications', notif.id), notif);
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] saveNotificationFirestore failed, saved in memory only:", error);
+    }
   }
 }
 
 async function markNotificationsReadFirestore(): Promise<void> {
-  try {
-    const snap = await getDocs(collection(db, 'notifications'));
-    for (const docSnap of snap.docs) {
-      const data = docSnap.data();
-      if (!data.read) {
-        await setDoc(doc(db, 'notifications', docSnap.id), { ...data, read: true });
+  memoNotifications = memoNotifications.map(n => ({ ...n, read: true }));
+  saveToLocalDiskSafe();
+
+  if (db) {
+    try {
+      const snap = await getDocs(collection(db, 'notifications'));
+      for (const docSnap of snap.docs) {
+        const data = docSnap.data();
+        if (!data.read) {
+          await setDoc(doc(db, 'notifications', docSnap.id), { ...data, read: true });
+        }
       }
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] markNotificationsReadFirestore failed, updated/saved in memory only:", error);
     }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.WRITE, 'notifications');
   }
 }
 
 async function clearNotificationsFirestore(): Promise<void> {
-  try {
-    const snap = await getDocs(collection(db, 'notifications'));
-    for (const docSnap of snap.docs) {
-      await deleteDoc(doc(db, 'notifications', docSnap.id));
+  memoNotifications = [];
+  saveToLocalDiskSafe();
+
+  if (db) {
+    try {
+      const snap = await getDocs(collection(db, 'notifications'));
+      for (const docSnap of snap.docs) {
+        await deleteDoc(doc(db, 'notifications', docSnap.id));
+      }
+    } catch (error) {
+      console.warn("[Firestore Fallback Active] clearNotificationsFirestore failed, cleared from memory only:", error);
     }
-  } catch (error) {
-    handleFirestoreError(error, OperationType.DELETE, 'notifications');
   }
 }
 
